@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ScratchGPT Web</title>
+  <style>
+    body { 
+      font-family: Arial; 
+      background: #f0f0f0; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #chat {
+      border: 1px solid #ccc; 
+      background: white;
+      padding: 10px; 
+      height: 400px; 
+      width: 70%;
+      max-width: 750px;
+      overflow-y: auto;
+      border-radius: 6px;
+      box-shadow: 0px 0px 5px #aaa;
+      margin-top: 20px;
+    }
+    #form {
+      width: 70%;
+      max-width: 750px;
+      margin-top: 10px;
+      display: flex;
+    }
+    input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      outline: none;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    button {
+      margin-left: 5px;
+      padding: 10px 15px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+    .loader {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid #ccc;
+      border-top: 3px solid black;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<h2>ScratchGPT Web 💬🤖</h2>
+<div id="chat"></div>
+
+<form id="form">
+  <input type="text" id="msg" autocomplete="off" placeholder="Nachricht...">
+  <button type="submit">Senden</button>
+</form>
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("msg");
+
+function scrollDown() {
+  chat.scrollTop = chat.scrollHeight;
+}
+
+document.getElementById("form").onsubmit = async (e) => {
+  e.preventDefault();
+  const msg = input.value.trim();
+  if(!msg) return;
+
+  // User anzeigen
+  chat.innerHTML += `<b>DU:</b> ${msg}<br>`;
+  scrollDown();
+  input.value = "";
+
+  // Loader anzeigen
+  const loaderId = "ld" + Date.now();
+  chat.innerHTML += `<div id="${loaderId}"><span class="loader"></span> KI denkt...</div>`;
+  scrollDown();
+
+  // Antwort holen
+  let response = await fetch("/send", {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: "message=" + encodeURIComponent(msg)
+  });
+  let text = await response.text();
+
+  document.getElementById(loaderId).remove();
+
+  // KI anzeigen
+  chat.innerHTML += `<b>KI:</b> ${text}<br><br>`;
+  scrollDown();
+};
+
+// ENTER drücken = senden
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    document.getElementById("form").dispatchEvent(new Event("submit"));
+  }
+});
+</script>
+
+</body>
+</html>
